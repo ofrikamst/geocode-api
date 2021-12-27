@@ -1,9 +1,9 @@
 package io.example.rest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -26,13 +26,15 @@ public class GeocodeController {
         headers.add("x-rapidapi-host", "google-maps-geocoding.p.rapidapi.com");
         headers.add("x-rapidapi-key", "4b0990766bmshee07ea2b79c5389p18e3abjsn79ca2e3354b2");
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
+        ResponseEntity<String> response = restTemplate.exchange("https://google-maps-geocoding.p.rapidapi.com/geocode/json?language=en&address="+fullAdress,
+                HttpMethod.GET, entity, String.class);
+        return getPostalCode(response);
+    }
 
-        return restTemplate.exchange("https://google-maps-geocoding.p.rapidapi.com/geocode/json?language=en&address="+fullAdress,
-                HttpMethod.GET, entity, String.class).getBody();
-
-
-        //JsonNode
-
+    private String getPostalCode(ResponseEntity<String> response) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(response.getBody());
+        return jsonNode.get("results").get(0).get("address_components").get(7).get("long_name").asText();
     }
 
 
