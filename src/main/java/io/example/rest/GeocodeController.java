@@ -20,13 +20,13 @@ public class GeocodeController {
 
     @RequestMapping(path="/geocode", method=RequestMethod.GET)
     public String getGeocode(@RequestBody Address address) throws IOException {
-        String fullAdress =address.getNumber() + address.getStreet();
+        String fullAddress = address.getFullAddress();
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.add("x-rapidapi-host", "google-maps-geocoding.p.rapidapi.com");
         headers.add("x-rapidapi-key", "4b0990766bmshee07ea2b79c5389p18e3abjsn79ca2e3354b2");
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
-        ResponseEntity<String> response = restTemplate.exchange("https://google-maps-geocoding.p.rapidapi.com/geocode/json?language=en&address="+fullAdress,
+        ResponseEntity<String> response = restTemplate.exchange("https://google-maps-geocoding.p.rapidapi.com/geocode/json?language=en&address="+fullAddress,
                 HttpMethod.GET, entity, String.class);
         return getPostalCode(response);
     }
