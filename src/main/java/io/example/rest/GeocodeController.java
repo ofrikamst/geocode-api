@@ -12,14 +12,20 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+
 @RestController
 public class GeocodeController {
 
     @Autowired
     private RestTemplate restTemplate;
 
-    @RequestMapping(path="/geocode", method=RequestMethod.GET)
+    @Autowired
+    private AddressRepository addressRepository;
+
+
+    @RequestMapping(path="/geocode", method=RequestMethod.POST)
     public String getGeocode(@RequestBody Address address) throws IOException {
+        // request to address
         String fullAddress = address.getFullAddress();
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -28,7 +34,11 @@ public class GeocodeController {
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
         ResponseEntity<String> response = restTemplate.exchange("https://google-maps-geocoding.p.rapidapi.com/geocode/json?language=en&address="+fullAddress,
                 HttpMethod.GET, entity, String.class);
-        return getPostalCode(response);
+        String postal = getPostalCode(response);
+        addressRepository.save(new AddressItem(null, address.getState(),
+                address.getCity(), address.getStreet(), address.getNumber(), postal));
+        // raise request
+        return postal;
     }
 
     private String getPostalCode(ResponseEntity<String> response) throws JsonProcessingException {
