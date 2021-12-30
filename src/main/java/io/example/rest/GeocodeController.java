@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.List;
 
 
 @RestController
@@ -25,7 +26,11 @@ public class GeocodeController {
 
     @RequestMapping(path="/geocode", method=RequestMethod.POST)
     public String getGeocode(@RequestBody Address address) throws IOException {
-        // request to address
+        List<AddressItem> similarAddresses = addressRepository.findAllByAddress(address.getState(), address.getCity(),
+                address.getStreet(), address.getNumber());
+        if (similarAddresses.size() > 0) {
+            return similarAddresses.get(0).getPostal();
+        }
         String fullAddress = address.getFullAddress();
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -34,11 +39,10 @@ public class GeocodeController {
         HttpEntity<String> entity = new HttpEntity<>(null, headers);
         ResponseEntity<String> response = restTemplate.exchange("https://google-maps-geocoding.p.rapidapi.com/geocode/json?language=en&address="+fullAddress,
                 HttpMethod.GET, entity, String.class);
-        String postal = getPostalCode(response);
-        addressRepository.save(new AddressItem(null, address.getState(),
-                address.getCity(), address.getStreet(), address.getNumber(), postal));
-        // raise request
-        return postal;
+        AddressItem addressItem = new AddressItem(null, address.getState(),
+                address.getCity(), address.getStreet(), address.getNumber(), getPostalCode(response));
+        addressRepository.save(addressItem);
+        return addressItem.getPostal();
     }
 
     private String getPostalCode(ResponseEntity<String> response) throws JsonProcessingException {
