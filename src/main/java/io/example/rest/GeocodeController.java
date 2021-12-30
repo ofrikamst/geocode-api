@@ -24,7 +24,7 @@ public class GeocodeController {
     private AddressRepository addressRepository;
 
 
-    @RequestMapping(path="/geocode", method=RequestMethod.POST)
+    @RequestMapping(path="/geocode", method=RequestMethod.POST, consumes={"application/json"})
     public String getGeocode(@RequestBody Address address) throws IOException {
         List<AddressItem> similarAddresses = addressRepository.findAllByAddress(address.getState(), address.getCity(),
                 address.getStreet(), address.getNumber());
