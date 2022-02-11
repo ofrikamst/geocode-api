@@ -12,8 +12,9 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-
+@CrossOrigin
 @RestController
 public class GeocodeController {
 
@@ -24,12 +25,16 @@ public class GeocodeController {
     private AddressRepository addressRepository;
 
 
-    @RequestMapping(path="/geocode", method=RequestMethod.POST, consumes={"application/json"})
-    public String getGeocode(@RequestBody Address address) throws IOException {
+
+    @RequestMapping(path="/geocode", method=RequestMethod.POST,
+            consumes={"application/json"}, produces={"application/json"})
+    public ResponseEntity<Object> getGeocode(@RequestBody Address address) throws IOException {
         List<AddressItem> similarAddresses = addressRepository.findAllByAddress(address.getState(), address.getCity(),
                 address.getStreet(), address.getNumber());
         if (similarAddresses.size() > 0) {
-            return similarAddresses.get(0).getPostal();
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                "postal_code", similarAddresses.get(0).getPostal()
+            ));
         }
         String fullAddress = address.getFullAddress();
         HttpHeaders headers = new HttpHeaders();
@@ -42,7 +47,9 @@ public class GeocodeController {
         AddressItem addressItem = new AddressItem(null, address.getState(),
                 address.getCity(), address.getStreet(), address.getNumber(), getPostalCode(response));
         addressRepository.save(addressItem);
-        return addressItem.getPostal();
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                "postal_code", addressItem.getPostal()
+        ));
     }
 
     private String getPostalCode(ResponseEntity<String> response) throws JsonProcessingException {
